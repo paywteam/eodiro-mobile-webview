@@ -74,7 +74,7 @@ export default function App() {
         backgroundColor: '#000',
       }}
     >
-      <StatusBar backgroundColor="black" barStyle="dark-content" />
+      <StatusBar backgroundColor="black" barStyle="light-content" />
       <WebView
         source={{
           uri: 'https://eodiro.com',
