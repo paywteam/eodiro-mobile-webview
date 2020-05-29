@@ -19,40 +19,38 @@ import Config from './config'
 import Constants from 'expo-constants'
 import { getBottomSpace } from 'react-native-iphone-x-helper'
 import { oneAPIClient } from '@payw/eodiro-one-api'
+import { useDarkMode } from 'react-native-dark-mode'
 
-// Programmatically set the status bar style to white text
-StatusBar.setBarStyle('light-content')
+type NotificationsStatus = 'unavailable' | 'denied' | 'blocked' | 'granted'
 
 export default function App() {
   let webView: WebView
 
   const [navState, setNavState] = useState<WebViewNavigation>()
-  const [expoPushToken, setExpoPushToken] = useState('')
 
-  const sendPushNotification = async () => {
-    const message = {
-      to: expoPushToken,
-      sound: 'default',
-      title: 'Original Title',
-      body: 'And here is the body!',
-      data: { data: 'goes here' },
-      _displayInForeground: true,
+  const [isNotificationsGranted, setIsNotificationsGranted] = useState(false)
+
+  const isDarkMode = useDarkMode()
+
+  useEffect(() => {
+    console.log(`isDarkMode: ${isDarkMode}`)
+    if (isDarkMode) {
+      StatusBar.setBarStyle('dark-content', true)
+    } else {
+      StatusBar.setBarStyle('light-content', true)
     }
-
-    const response = await fetch(Config.pushApiUrl, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Accept-encoding': 'gzip, deflate',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message),
-    })
-  }
+  }, [isDarkMode])
 
   useEffect(() => {
     async function init() {
-      let finalStatus: 'unavailable' | 'denied' | 'blocked' | 'granted'
+      // Programmatically set the status bar style to white text
+      if (isDarkMode) {
+        StatusBar.setBarStyle('dark-content')
+      } else {
+        StatusBar.setBarStyle('light-content')
+      }
+
+      let finalStatus: NotificationsStatus
 
       const { status: existingStatus } = await checkNotifications()
 
@@ -69,15 +67,11 @@ export default function App() {
       }
 
       if (finalStatus === 'granted') {
-        const { data: token } = await Notifications.getExpoPushTokenAsync({
-          experienceId: Config.experienceId,
-        })
-
-        setExpoPushToken(token)
+        setIsNotificationsGranted(true)
       }
     }
 
-    // init()
+    init()
   }, [])
 
   return (
@@ -86,16 +80,17 @@ export default function App() {
         display: 'flex',
         height: '100%',
         paddingTop: Constants.statusBarHeight,
-        backgroundColor: '#000',
+        backgroundColor: isDarkMode ? '#000' : '#fff',
       }}
     >
       <WebView
         ref={(wv) => (webView = wv as WebView)}
         source={{
-          uri: 'http://localhost:3020',
-          // uri: 'https://eodiro.com',
+          // uri: 'http://localhost:3020',
+          uri: 'https://eodiro.com',
         }}
         decelerationRate="normal"
+        onLoad={() => {}}
         onMessage={async ({ nativeEvent }) => {
           let data: {
             apiHost: string
@@ -162,9 +157,9 @@ export default function App() {
 
       <View
         style={{
-          borderTopColor: '#f0f0f3',
+          borderTopColor: isDarkMode ? '#222' : '#f0f0f3',
           borderTopWidth: 1,
-          backgroundColor: '#fff',
+          backgroundColor: isDarkMode ? '#000' : '#fff',
           bottom: 0,
           paddingBottom: getBottomSpace(),
           flexDirection: 'row',
@@ -182,6 +177,7 @@ export default function App() {
             style={{
               ...style.arrow,
               opacity: navState?.canGoBack ? 1 : 0.3,
+              color: isDarkMode ? '#fff' : '#000',
             }}
           >
             &lsaquo;
@@ -198,6 +194,7 @@ export default function App() {
             style={{
               ...style.arrow,
               opacity: navState?.canGoForward ? 1 : 0.3,
+              color: isDarkMode ? '#fff' : '#000',
             }}
           >
             &rsaquo;
