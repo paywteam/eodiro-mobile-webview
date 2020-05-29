@@ -30,6 +30,8 @@ export default function App() {
 
   const [isNotificationsGranted, setIsNotificationsGranted] = useState(false)
 
+  const [isWebViewPageLoaded, setIsWebViewPageLoaded] = useState(false)
+
   const isDarkMode = useDarkMode()
 
   useEffect(() => {
@@ -90,7 +92,11 @@ export default function App() {
           uri: 'https://eodiro.com',
         }}
         decelerationRate="normal"
-        onLoad={() => {}}
+        onLoad={(e) => {
+          if (!e.nativeEvent.loading) {
+            setIsWebViewPageLoaded(true)
+          }
+        }}
         onMessage={async ({ nativeEvent }) => {
           let data: {
             apiHost: string
@@ -154,6 +160,19 @@ export default function App() {
           setNavState(e)
         }}
       />
+
+      {!isWebViewPageLoaded && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: isDarkMode ? '#000' : '#fff',
+          }}
+        />
+      )}
 
       <View
         style={{
