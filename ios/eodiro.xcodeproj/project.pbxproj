@@ -269,7 +269,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = eodiro/eodiro.entitlements;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = NO;
 				DEVELOPMENT_TEAM = TA74GWSAB2;
 				INFOPLIST_FILE = eodiro/Info.plist;
@@ -281,6 +281,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.eodiro.app;
 				PRODUCT_NAME = eodiro;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -291,7 +292,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = eodiro/eodiro.entitlements;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = TA74GWSAB2;
 				INFOPLIST_FILE = eodiro/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -302,6 +303,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.eodiro.app;
 				PRODUCT_NAME = eodiro;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;

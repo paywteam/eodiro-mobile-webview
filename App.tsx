@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications'
 
 import {
   Alert,
+  Linking,
   StatusBar,
   StyleSheet,
   Text,
@@ -23,6 +24,14 @@ import { useDarkMode } from 'react-native-dark-mode'
 
 type NotificationsStatus = 'unavailable' | 'denied' | 'blocked' | 'granted'
 
+function setNavBarStyle(isDarkMode: boolean) {
+  if (isDarkMode) {
+    StatusBar.setBarStyle('light-content', true)
+  } else {
+    StatusBar.setBarStyle('dark-content', true)
+  }
+}
+
 export default function App() {
   let webView: WebView
 
@@ -32,25 +41,20 @@ export default function App() {
 
   const [isWebViewPageLoaded, setIsWebViewPageLoaded] = useState(false)
 
+  const [url, setUrl] = useState('https://eodiro.com')
+
   const isDarkMode = useDarkMode()
 
   useEffect(() => {
-    console.log(`isDarkMode: ${isDarkMode}`)
-    if (isDarkMode) {
-      StatusBar.setBarStyle('dark-content', true)
-    } else {
-      StatusBar.setBarStyle('light-content', true)
-    }
+    setTimeout(() => {
+      setNavBarStyle(isDarkMode)
+    }, 1000)
   }, [isDarkMode])
 
   useEffect(() => {
     async function init() {
       // Programmatically set the status bar style to white text
-      if (isDarkMode) {
-        StatusBar.setBarStyle('dark-content')
-      } else {
-        StatusBar.setBarStyle('light-content')
-      }
+      setNavBarStyle(isDarkMode)
 
       let finalStatus: NotificationsStatus
 
@@ -71,25 +75,43 @@ export default function App() {
       if (finalStatus === 'granted') {
         setIsNotificationsGranted(true)
       }
+
+      // Foreground notifications
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+        }),
+      })
+
+      // On tap an notification
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        const data = response.notification.request.content.data
+        const body = data.body as Record<string, any>
+
+        if (body.type === 'notice') {
+          console.log(body.url)
+          Linking.openURL(body.url)
+        }
+      })
     }
 
     init()
   }, [])
 
   return (
-    <View
-      style={{
-        display: 'flex',
-        height: '100%',
-        paddingTop: Constants.statusBarHeight,
-        backgroundColor: isDarkMode ? '#000' : '#fff',
-      }}
-    >
+    <>
+      <View
+        style={{
+          height: Constants.statusBarHeight,
+          backgroundColor: isDarkMode ? '#000' : '#fff',
+        }}
+      />
       <WebView
         ref={(wv) => (webView = wv as WebView)}
         source={{
-          // uri: 'http://localhost:3020',
-          uri: 'https://eodiro.com',
+          uri: url,
         }}
         decelerationRate="normal"
         onLoad={(e) => {
@@ -116,8 +138,6 @@ export default function App() {
             return
           }
 
-          console.log(data)
-
           const { key, authProps, apiHost } = data
 
           if (key === 'auth') {
@@ -131,9 +151,11 @@ export default function App() {
               let pushToken = ''
 
               if (Constants.isDevice) {
-                pushToken = ((await Notifications.getExpoPushTokenAsync({
+                const { data } = await Notifications.getExpoPushTokenAsync({
                   experienceId: Config.experienceId,
-                })) as unknown) as string
+                })
+
+                pushToken = data
               }
 
               if (!pushToken) {
@@ -144,7 +166,7 @@ export default function App() {
               const result = await oneAPIClient(apiHost, {
                 action: 'addDevice',
                 data: {
-                  userId: 1,
+                  userId: authProps.userId,
                   deviceId,
                   pushToken,
                 },
@@ -220,7 +242,7 @@ export default function App() {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </>
   )
 }
 
