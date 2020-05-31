@@ -1,30 +1,25 @@
+import 'react-native-gesture-handler'
+
 import * as Notifications from 'expo-notifications'
 
-import {
-  Alert,
-  Linking,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native'
+import { Linking, StatusBar, StyleSheet } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { WebView, WebViewNavigation } from 'react-native-webview'
 import {
   checkNotifications,
   requestNotifications,
 } from 'react-native-permissions'
 
-import Config from './config'
-import Constants from 'expo-constants'
-import { getBottomSpace } from 'react-native-iphone-x-helper'
-import { oneAPIClient } from '@payw/eodiro-one-api'
+import EodiroWebViewScreen from './src/screens/EodiroWebViewScreen'
+import { NavigationContainer } from '@react-navigation/native'
+import { NotificationsStatus } from './src/types'
+import { WebViewNavigation } from 'react-native-webview'
+import { createNativeStackNavigator } from 'react-native-screens/native-stack'
+import { enableScreens } from 'react-native-screens'
 import { useDarkMode } from 'react-native-dark-mode'
 
-type NotificationsStatus = 'unavailable' | 'denied' | 'blocked' | 'granted'
+enableScreens()
 
-function setNavBarStyle(isDarkMode: boolean) {
+function setNavBarTextColor(isDarkMode: boolean) {
   if (isDarkMode) {
     StatusBar.setBarStyle('light-content', true)
   } else {
@@ -32,9 +27,15 @@ function setNavBarStyle(isDarkMode: boolean) {
   }
 }
 
-export default function App() {
-  let webView: WebView
+export type RootStackParamList = {
+  EodiroWebView: { url: string }
+  ModalWebView: { url: string }
+}
 
+// const RootStack = createStackNavigator<RootStackParamList>()
+const RootStack = createNativeStackNavigator<RootStackParamList>()
+
+export default function App() {
   const [navState, setNavState] = useState<WebViewNavigation>()
 
   const [isNotificationsGranted, setIsNotificationsGranted] = useState(false)
@@ -42,19 +43,20 @@ export default function App() {
   const [isWebViewPageLoaded, setIsWebViewPageLoaded] = useState(false)
 
   const [url, setUrl] = useState('https://eodiro.com')
+  // const [url, setUrl] = useState('http://10.0.1.4:3020/')
 
   const isDarkMode = useDarkMode()
 
   useEffect(() => {
     setTimeout(() => {
-      setNavBarStyle(isDarkMode)
-    }, 1000)
+      setNavBarTextColor(isDarkMode)
+    }, 1200)
   }, [isDarkMode])
 
   useEffect(() => {
     async function init() {
       // Programmatically set the status bar style to white text
-      setNavBarStyle(isDarkMode)
+      setNavBarTextColor(isDarkMode)
 
       let finalStatus: NotificationsStatus
 
@@ -101,89 +103,34 @@ export default function App() {
   }, [])
 
   return (
-    <>
-      <View
-        style={{
-          height: Constants.statusBarHeight,
-          backgroundColor: isDarkMode ? '#000' : '#fff',
+    <NavigationContainer>
+      <RootStack.Navigator
+        screenOptions={{
+          // cardShadowEnabled: true,
+          // cardOverlayEnabled: true,
+          headerShown: false,
         }}
-      />
-      <WebView
-        ref={(wv) => (webView = wv as WebView)}
-        source={{
-          uri: url,
-        }}
-        decelerationRate="normal"
-        onLoad={(e) => {
-          if (!e.nativeEvent.loading) {
-            setIsWebViewPageLoaded(true)
-          }
-        }}
-        onMessage={async ({ nativeEvent }) => {
-          let data: {
-            apiHost: string
-            key: string
-            authProps?: {
-              userId: number
-              isSigned: boolean
-              tokens: {
-                accessToken?: string
-                refreshToken?: string
-              }
-            }
-          }
-          try {
-            data = JSON.parse(nativeEvent.data)
-          } catch (error) {
-            return
-          }
+      >
+        <RootStack.Screen
+          name="EodiroWebView"
+          component={EodiroWebViewScreen}
+          initialParams={{
+            url,
+          }}
+          options={{
+            // headerShown: false,
+            // cardStyle: {
+            //   backgroundColor: isDarkMode ? '#000' : '#f0f2f3',
+            // },
+            contentStyle: {
+              backgroundColor: isDarkMode ? '#000' : '#f0f2f3',
+            },
+            stackPresentation: 'push',
+          }}
+        />
+      </RootStack.Navigator>
 
-          const { key, authProps, apiHost } = data
-
-          if (key === 'auth') {
-            if (authProps?.isSigned) {
-              const deviceId = Constants.deviceId
-              if (!deviceId) {
-                Alert.alert('Error: Could not get Device ID')
-                return
-              }
-
-              let pushToken = ''
-
-              if (Constants.isDevice) {
-                const { data } = await Notifications.getExpoPushTokenAsync({
-                  experienceId: Config.experienceId,
-                })
-
-                pushToken = data
-              }
-
-              if (!pushToken) {
-                Alert.alert('에러', '푸시 알림 토큰을 가져올 수 없습니다.')
-                return
-              }
-
-              const result = await oneAPIClient(apiHost, {
-                action: 'addDevice',
-                data: {
-                  userId: authProps.userId,
-                  deviceId,
-                  pushToken,
-                },
-              })
-
-              if (result.err) {
-                Alert.alert('기기 등록에 문제가 발생했습니다.')
-              }
-            }
-          }
-        }}
-        onNavigationStateChange={(e) => {
-          setNavState(e)
-        }}
-      />
-
-      {!isWebViewPageLoaded && (
+      {/* {!isWebViewPageLoaded && (
         <View
           style={{
             position: 'absolute',
@@ -194,9 +141,9 @@ export default function App() {
             backgroundColor: isDarkMode ? '#000' : '#fff',
           }}
         />
-      )}
+      )} */}
 
-      <View
+      {/* <View
         style={{
           borderTopColor: isDarkMode ? '#222' : '#f0f0f3',
           borderTopWidth: 1,
@@ -241,8 +188,8 @@ export default function App() {
             &rsaquo;
           </Text>
         </TouchableOpacity>
-      </View>
-    </>
+      </View> */}
+    </NavigationContainer>
   )
 }
 
