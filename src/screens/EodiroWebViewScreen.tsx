@@ -116,7 +116,10 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
               })
 
               if (result.err) {
-                Alert.alert('기기 등록에 문제가 발생했습니다.')
+                Alert.alert(
+                  '기기 등록에 문제가 발생했습니다.',
+                  `ERR: ${result.err}`
+                )
               }
             }
           } else if (key === 'goBack') {
