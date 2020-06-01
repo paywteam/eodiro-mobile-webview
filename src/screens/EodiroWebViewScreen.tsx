@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 
 import Config from '../../config'
 import Constants from 'expo-constants'
+import DeviceInfo from 'react-native-device-info'
 import { MessageData } from '../types'
 import React from 'react'
 import { RootStackParamList } from '../../App'
@@ -88,11 +89,7 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
 
           if (key === 'auth') {
             if (authProps?.isSigned) {
-              const deviceId = Constants.deviceId
-              if (!deviceId) {
-                Alert.alert('Error: Could not get Device ID')
-                return
-              }
+              const deviceId = DeviceInfo.getUniqueId()
 
               let pushToken = ''
 
