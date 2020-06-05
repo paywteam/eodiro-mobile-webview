@@ -2,14 +2,16 @@ import 'react-native-gesture-handler'
 
 import * as Notifications from 'expo-notifications'
 
-import { Linking, StatusBar, StyleSheet } from 'react-native'
+import { Keyboard, Linking, StatusBar, StyleSheet } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import {
   checkNotifications,
   requestNotifications,
 } from 'react-native-permissions'
 
+import { AppStatus } from './src/modules/app-status'
 import EodiroWebViewScreen from './src/screens/EodiroWebViewScreen'
+import ModalWebViewScreen from './src/screens/ModalWebViewScreen'
 import { NavigationContainer } from '@react-navigation/native'
 import { NotificationsStatus } from './src/types'
 import { WebViewNavigation } from 'react-native-webview'
@@ -22,8 +24,10 @@ enableScreens()
 function setNavBarTextColor(isDarkMode: boolean) {
   if (isDarkMode) {
     StatusBar.setBarStyle('light-content', true)
+    AppStatus.currentStatusBarStyle = 'light-content'
   } else {
     StatusBar.setBarStyle('dark-content', true)
+    AppStatus.currentStatusBarStyle = 'dark-content'
   }
 }
 
@@ -42,8 +46,9 @@ export default function App() {
 
   const [isWebViewPageLoaded, setIsWebViewPageLoaded] = useState(false)
 
-  const [url, setUrl] = useState('https://eodiro.com')
+  // const [url, setUrl] = useState('https://eodiro.com')
   // const [url, setUrl] = useState('http://10.0.1.4:3020/')
+  const [url, setUrl] = useState('http://192.168.0.105:3020/')
 
   const isDarkMode = useDarkMode()
 
@@ -97,6 +102,14 @@ export default function App() {
           Linking.openURL(body.url)
         }
       })
+
+      Keyboard.addListener('keyboardWillShow', () => {
+        StatusBar.setBarStyle(AppStatus.currentStatusBarStyle)
+      })
+
+      Keyboard.addListener('keyboardDidHide', () => {
+        StatusBar.setBarStyle(AppStatus.currentStatusBarStyle)
+      })
     }
 
     init()
@@ -106,8 +119,6 @@ export default function App() {
     <NavigationContainer>
       <RootStack.Navigator
         screenOptions={{
-          // cardShadowEnabled: true,
-          // cardOverlayEnabled: true,
           headerShown: false,
         }}
       >
@@ -118,30 +129,23 @@ export default function App() {
             url,
           }}
           options={{
-            // headerShown: false,
-            // cardStyle: {
-            //   backgroundColor: isDarkMode ? '#000' : '#f0f2f3',
-            // },
             contentStyle: {
               backgroundColor: isDarkMode ? '#000' : '#f0f2f3',
             },
             stackPresentation: 'push',
           }}
         />
-      </RootStack.Navigator>
-
-      {/* {!isWebViewPageLoaded && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: isDarkMode ? '#000' : '#fff',
+        <RootStack.Screen
+          name="ModalWebView"
+          component={ModalWebViewScreen}
+          options={{
+            contentStyle: {
+              backgroundColor: isDarkMode ? '#000' : '#f0f2f3',
+            },
+            stackPresentation: 'modal',
           }}
         />
-      )} */}
+      </RootStack.Navigator>
 
       {/* <View
         style={{

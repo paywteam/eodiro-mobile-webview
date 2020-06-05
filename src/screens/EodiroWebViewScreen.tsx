@@ -11,6 +11,7 @@ import React from 'react'
 import { RootStackParamList } from '../../App'
 import { RouteProp } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
+import URL from 'url-parse'
 import WebView from 'react-native-webview'
 import { oneAPIClient } from '@payw/eodiro-one-api'
 import { useDarkMode } from 'react-native-dark-mode'
@@ -88,39 +89,41 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
           const { key, authProps, apiHost } = data
 
           if (key === 'auth') {
-            if (authProps?.isSigned) {
-              const deviceId = DeviceInfo.getUniqueId()
+            if (!authProps?.isSigned) return
 
-              let pushToken = ''
+            const deviceId = DeviceInfo.getUniqueId()
 
-              if (Constants.isDevice) {
-                const { data } = await Notifications.getExpoPushTokenAsync({
-                  experienceId: Config.experienceId,
-                })
+            let pushToken = ''
 
-                pushToken = data
-              }
-
-              if (!pushToken) {
-                Alert.alert('에러', '푸시 알림 토큰을 가져올 수 없습니다.')
-                return
-              }
-
-              const result = await oneAPIClient(apiHost, {
-                action: 'addDevice',
-                data: {
-                  userId: authProps.userId,
-                  deviceId,
-                  pushToken,
-                },
+            if (Constants.isDevice) {
+              const { data } = await Notifications.getExpoPushTokenAsync({
+                experienceId: Config.experienceId,
               })
+              pushToken = data
+            }
 
-              if (result.err) {
-                Alert.alert(
-                  '기기 등록에 문제가 발생했습니다.',
-                  `ERR: ${result.err}`
-                )
-              }
+            if (!pushToken) {
+              Alert.alert('에러', '푸시 알림 토큰을 가져올 수 없습니다.')
+              return
+            }
+
+            const result = await oneAPIClient(apiHost, {
+              action: 'addDevice',
+              data: {
+                deviceId,
+                pushToken,
+                accessToken: authProps.tokens.accessToken as string,
+              },
+            })
+
+            console.log(result)
+
+            if (result.err) {
+              console.log(result.err)
+              Alert.alert(
+                '기기 등록에 문제가 발생했습니다.',
+                `ERR: ${result.err}`
+              )
             }
           } else if (key === 'goBack') {
             if (navigation.canGoBack()) {
@@ -147,9 +150,17 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
           if (isLoaded) {
             webView.stopLoading()
 
-            navigation.push('EodiroWebView', {
-              url: e.url,
-            })
+            const url = new URL(e.url)
+
+            if (url.pathname === '/signin') {
+              navigation.push('ModalWebView', {
+                url: e.url,
+              })
+            } else {
+              navigation.push('EodiroWebView', {
+                url: e.url,
+              })
+            }
 
             setIsPushed(true)
           }
