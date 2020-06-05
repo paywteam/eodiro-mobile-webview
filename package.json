@@ -10,14 +10,14 @@
     "build:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res"
   },
   "dependencies": {
-    "@payw/eodiro-one-api": "^1.9.0",
+    "@payw/eodiro-one-api": "^2.0.4",
     "@react-native-community/masked-view": "^0.1.10",
     "@react-navigation/native": "^5.5.0",
     "@react-navigation/stack": "^5.4.1",
     "axios": "^0.19.2",
     "expo": "~37.0.12",
     "expo-constants": "^9.0.0",
-    "expo-notifications": "^0.1.7",
+    "expo-notifications": "^0.3.1",
     "expo-updates": "~0.2.7",
     "react": "~16.13.1",
     "react-dom": "~16.13.1",
@@ -31,17 +31,19 @@
     "react-native-safe-area-context": "^3.0.2",
     "react-native-screens": "^2.8.0",
     "react-native-unimodules": "~0.9.1",
-    "react-native-web": "~0.12.2",
-    "react-native-webview": "^10.2.1"
+    "react-native-web": "~0.12.3",
+    "react-native-webview": "^10.2.3",
+    "url-parse": "^1.4.7"
   },
   "devDependencies": {
-    "@babel/core": "~7.10.1",
-    "@react-native-community/cli": "^4.9.0",
+    "@babel/core": "~7.10.2",
+    "@react-native-community/cli": "^4.10.0",
     "@types/react": "~16.9.35",
-    "@types/react-native": "~0.62.12",
+    "@types/react-native": "~0.62.13",
+    "@types/url-parse": "^1.4.3",
     "babel-preset-expo": "~8.2.1",
     "jest-expo": "~37.0.0",
-    "typescript": "~3.9.3"
+    "typescript": "~3.9.5"
   },
   "jest": {
     "preset": "react-native"
