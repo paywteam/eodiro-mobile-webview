@@ -10,14 +10,14 @@
     "build:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res"
   },
   "dependencies": {
-    "@payw/eodiro-one-api": "^2.0.4",
+    "@payw/eodiro-one-api": "^2.0.5",
     "@react-native-community/masked-view": "^0.1.10",
     "@react-navigation/native": "^5.5.0",
     "@react-navigation/stack": "^5.4.1",
     "axios": "^0.19.2",
     "expo": "~37.0.12",
     "expo-constants": "^9.0.0",
-    "expo-notifications": "^0.3.1",
+    "expo-notifications": "^0.1.7",
     "expo-updates": "~0.2.7",
     "react": "~16.13.1",
     "react-dom": "~16.13.1",
