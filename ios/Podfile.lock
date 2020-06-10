@@ -32,6 +32,9 @@ PODS:
   - EXPermissions (8.1.0):
     - UMCore
     - UMPermissionsInterface
+  - EXScreenOrientation (1.0.0):
+    - React-Core
+    - UMCore
   - EXSQLite (8.1.0):
     - UMCore
     - UMFileSystemInterface
@@ -362,6 +365,7 @@ DEPENDENCIES:
   - EXLocation (from `../node_modules/expo-location/ios`)
   - EXNotifications (from `../node_modules/expo-notifications/ios`)
   - EXPermissions (from `../node_modules/expo-permissions/ios`)
+  - EXScreenOrientation (from `../node_modules/expo-screen-orientation/ios`)
   - EXSQLite (from `../node_modules/expo-sqlite/ios`)
   - EXUpdates (from `../node_modules/expo-updates/ios`)
   - EXWebBrowser (from `../node_modules/expo-web-browser/ios`)
@@ -460,6 +464,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-notifications/ios"
   EXPermissions:
     :path: "../node_modules/expo-permissions/ios"
+  EXScreenOrientation:
+    :path: "../node_modules/expo-screen-orientation/ios"
   EXSQLite:
     :path: "../node_modules/expo-sqlite/ios"
   EXUpdates:
@@ -605,6 +611,7 @@ SPEC CHECKSUMS:
   EXLocation: 0397e4f11666d6ceb026b6424fdf66995c604964
   EXNotifications: a2bef2451bd2acd752a023f44f11d93067bb4852
   EXPermissions: d2cafee9c72578ecc9ca121481e6c4a04a798861
+  EXScreenOrientation: 7d604b15370a9d7c6e59ce04a1d29fecf769560e
   EXSQLite: 15268ec49f859e4594fe5b0a1c7a47913da0b67e
   EXUpdates: 1b470c19c03f149aec214d291e1c89b04acd7519
   EXWebBrowser: 6364e9e1ea73f6c3c2e6e3cc0ac17259a260e3a8
