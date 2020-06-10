@@ -1,8 +1,9 @@
 import * as Notifications from 'expo-notifications'
 
 import { ActivityIndicator, Alert, View } from 'react-native'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
+import { AppStatus } from '../modules/app-status'
 import Config from '../../config'
 import Constants from 'expo-constants'
 import DeviceInfo from 'react-native-device-info'
@@ -34,7 +35,8 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
 }) => {
   const isDarkMode = useDarkMode()
 
-  let webView: WebView
+  // let webView: WebView
+  const webView = useRef<WebView>()
   const { url } = route.params
   const [isLoaded, setIsLoaded] = useState(false)
   const [isPushed, setIsPushed] = useState(false)
@@ -44,13 +46,11 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
   useEffect(() => {
     function focusHandler() {
       setIsPushed(false)
+
+      webView.current?.injectJavaScript(`location.reload()`)
     }
 
     navigation.addListener('focus', focusHandler)
-
-    return () => {
-      navigation.removeListener('focus', focusHandler)
-    }
   }, [])
 
   return (
@@ -69,7 +69,9 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
         }}
       />
       <WebView
-        ref={(wv) => (webView = wv as WebView)}
+        ref={(wv) => {
+          webView.current = wv as WebView
+        }}
         source={{
           uri: url,
         }}
@@ -89,6 +91,7 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
           const { key, authProps, apiHost } = data
 
           if (key === 'auth') {
+            if (new URL(url).pathname !== '/') return
             if (!authProps?.isSigned) return
 
             const deviceId = DeviceInfo.getUniqueId()
@@ -116,8 +119,6 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
               },
             })
 
-            console.log(result)
-
             if (result.err) {
               console.log(result.err)
               Alert.alert(
@@ -126,9 +127,10 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
               )
             }
           } else if (key === 'goBack') {
-            if (navigation.canGoBack()) {
-              navigation.goBack()
-            }
+            // if (navigation.canGoBack()) {
+            //   navigation.goBack()
+            // }
+            webView.current?.goBack()
           } else if (key === 'fontsReady') {
             setTimeout(() => {
               setIsLoaded(true)
@@ -138,33 +140,49 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
             setIsNavScrolled(value)
           }
         }}
-        // On click a link
-        onNavigationStateChange={(e) => {
-          if (!webView) return
-
-          if (isPushed) {
-            webView.stopLoading()
-            return
-          }
-
-          if (isLoaded) {
-            webView.stopLoading()
-
-            const url = new URL(e.url)
-
-            if (url.pathname === '/signin') {
-              navigation.push('ModalWebView', {
-                url: e.url,
-              })
-            } else {
-              navigation.push('EodiroWebView', {
-                url: e.url,
-              })
-            }
-
-            setIsPushed(true)
-          }
+        onLoadEnd={(e) => {
+          // if (e.nativeEvent.loading) {
+          //   setIsLoaded(true)
+          // }
         }}
+        onLoadStart={(e) => {
+          // console.log('loading')
+        }}
+        // On click a link
+        // onShouldStartLoadWithRequest={(e) => {
+        //   if (isPushed) {
+        //     return false
+        //   }
+
+        //   if (isLoaded) {
+        //     if (url === e.url) {
+        //       return true
+        //     }
+
+        //     const currentUrl = new URL(url)
+        //     const nextUrl = new URL(e.url)
+
+        //     if (currentUrl.hostname !== nextUrl.hostname) {
+        //       console.log('open general modal window')
+        //       navigation.push('GeneralWebView', {
+        //         url: e.url,
+        //       })
+        //     } else if (nextUrl.pathname === '/signin') {
+        //       navigation.push('ModalWebView', {
+        //         url: e.url,
+        //       })
+        //     } else {
+        //       navigation.push('EodiroWebView', {
+        //         url: e.url,
+        //       })
+        //     }
+
+        //     setIsPushed(true)
+        //     return false
+        //   }
+
+        //   return true
+        // }}
       />
 
       {!isLoaded && (
@@ -180,7 +198,7 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
             justifyContent: 'center',
           }}
         >
-          <ActivityIndicator />
+          <ActivityIndicator size="large" />
         </View>
       )}
     </>
