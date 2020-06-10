@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler'
 
 import * as Notifications from 'expo-notifications'
+import * as ScreenOrientation from 'expo-screen-orientation'
 
 import { Keyboard, Linking, StatusBar, StyleSheet } from 'react-native'
 import React, { useEffect, useState } from 'react'
@@ -10,7 +11,9 @@ import {
 } from 'react-native-permissions'
 
 import { AppStatus } from './src/modules/app-status'
+import DeviceInfo from 'react-native-device-info'
 import EodiroWebViewScreen from './src/screens/EodiroWebViewScreen'
+import GeneralWebViewScreen from './src/screens/GeneralWebViewScreen'
 import ModalWebViewScreen from './src/screens/ModalWebViewScreen'
 import { NavigationContainer } from '@react-navigation/native'
 import { NotificationsStatus } from './src/types'
@@ -34,6 +37,7 @@ function setNavBarTextColor(isDarkMode: boolean) {
 export type RootStackParamList = {
   EodiroWebView: { url: string }
   ModalWebView: { url: string }
+  GeneralWebView: { url: string }
 }
 
 // const RootStack = createStackNavigator<RootStackParamList>()
@@ -46,9 +50,9 @@ export default function App() {
 
   const [isWebViewPageLoaded, setIsWebViewPageLoaded] = useState(false)
 
-  // const [url, setUrl] = useState('https://eodiro.com')
-  // const [url, setUrl] = useState('http://10.0.1.4:3020/')
-  const [url, setUrl] = useState('http://192.168.0.105:3020/')
+  const [url, setUrl] = useState(
+    __DEV__ ? 'http://192.168.0.105:3020/' : 'https://eodiro.com'
+  )
 
   const isDarkMode = useDarkMode()
 
@@ -98,7 +102,6 @@ export default function App() {
         const body = data.body as Record<string, any>
 
         if (body.type === 'notice') {
-          console.log(body.url)
           Linking.openURL(body.url)
         }
       })
@@ -138,6 +141,16 @@ export default function App() {
         <RootStack.Screen
           name="ModalWebView"
           component={ModalWebViewScreen}
+          options={{
+            contentStyle: {
+              backgroundColor: isDarkMode ? '#000' : '#f0f2f3',
+            },
+            stackPresentation: 'modal',
+          }}
+        />
+        <RootStack.Screen
+          name="GeneralWebView"
+          component={GeneralWebViewScreen}
           options={{
             contentStyle: {
               backgroundColor: isDarkMode ? '#000' : '#f0f2f3',
