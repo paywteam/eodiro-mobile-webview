@@ -3,23 +3,31 @@ import 'react-native-gesture-handler'
 import * as Notifications from 'expo-notifications'
 import * as ScreenOrientation from 'expo-screen-orientation'
 
-import { Keyboard, Linking, StatusBar, StyleSheet } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import {
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  Linking,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
+import { MessageData, NotificationsStatus } from './src/types'
+import React, { useEffect, useRef, useState } from 'react'
+import WebView, { WebViewNavigation } from 'react-native-webview'
 import {
   checkNotifications,
   requestNotifications,
 } from 'react-native-permissions'
 
 import { AppStatus } from './src/modules/app-status'
+import Config from './config'
+import Constants from 'expo-constants'
 import DeviceInfo from 'react-native-device-info'
-import EodiroWebViewScreen from './src/screens/EodiroWebViewScreen'
-import GeneralWebViewScreen from './src/screens/GeneralWebViewScreen'
-import ModalWebViewScreen from './src/screens/ModalWebViewScreen'
-import { NavigationContainer } from '@react-navigation/native'
-import { NotificationsStatus } from './src/types'
-import { WebViewNavigation } from 'react-native-webview'
-import { createNativeStackNavigator } from 'react-native-screens/native-stack'
+import URL from 'url-parse'
 import { enableScreens } from 'react-native-screens'
+import { oneApiClient } from '@payw/eodiro-one-api'
 import { useDarkMode } from 'react-native-dark-mode'
 
 enableScreens()
@@ -34,27 +42,17 @@ function setNavBarTextColor(isDarkMode: boolean) {
   }
 }
 
-export type RootStackParamList = {
-  EodiroWebView: { url: string }
-  ModalWebView: { url: string }
-  GeneralWebView: { url: string }
-}
-
-// const RootStack = createStackNavigator<RootStackParamList>()
-const RootStack = createNativeStackNavigator<RootStackParamList>()
-
 export default function App() {
-  const [navState, setNavState] = useState<WebViewNavigation>()
-
   const [isNotificationsGranted, setIsNotificationsGranted] = useState(false)
 
-  const [isWebViewPageLoaded, setIsWebViewPageLoaded] = useState(false)
-
-  const [url, setUrl] = useState(
-    __DEV__ ? 'http://192.168.0.105:3020/' : 'https://eodiro.com'
-  )
+  const [url, setUrl] = useState('https://eodiro.com')
 
   const isDarkMode = useDarkMode()
+
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [isNavScrolled, setIsNavScrolled] = useState(false)
+  const webView = useRef<WebView>()
+  const [currentUrl, setCurrentUrl] = useState(url)
 
   useEffect(() => {
     setTimeout(() => {
@@ -119,109 +117,87 @@ export default function App() {
   }, [])
 
   return (
-    <NavigationContainer>
-      <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <RootStack.Screen
-          name="EodiroWebView"
-          component={EodiroWebViewScreen}
-          initialParams={{
-            url,
-          }}
-          options={{
-            contentStyle: {
-              backgroundColor: isDarkMode ? '#000' : '#f0f2f3',
-            },
-            stackPresentation: 'push',
-          }}
-        />
-        <RootStack.Screen
-          name="ModalWebView"
-          component={ModalWebViewScreen}
-          options={{
-            contentStyle: {
-              backgroundColor: isDarkMode ? '#000' : '#f0f2f3',
-            },
-            stackPresentation: 'modal',
-          }}
-        />
-        <RootStack.Screen
-          name="GeneralWebView"
-          component={GeneralWebViewScreen}
-          options={{
-            contentStyle: {
-              backgroundColor: isDarkMode ? '#000' : '#f0f2f3',
-            },
-            stackPresentation: 'modal',
-          }}
-        />
-      </RootStack.Navigator>
-
-      {/* <View
+    <>
+      <View
         style={{
-          borderTopColor: isDarkMode ? '#222' : '#f0f0f3',
-          borderTopWidth: 1,
-          backgroundColor: isDarkMode ? '#000' : '#fff',
-          bottom: 0,
-          paddingBottom: getBottomSpace(),
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
+          height: Constants.statusBarHeight,
+          backgroundColor:
+            isDarkMode && isNavScrolled
+              ? '#1f1f1f'
+              : isDarkMode && !isNavScrolled
+              ? '#000'
+              : isNavScrolled
+              ? '#fff'
+              : '#f0f2f3',
         }}
-      >
-        <TouchableOpacity
-          style={style.arrowContainer}
-          onPress={() => {
-            webView.goBack()
-          }}
-        >
-          <Text
-            style={{
-              ...style.arrow,
-              opacity: navState?.canGoBack ? 1 : 0.3,
-              color: isDarkMode ? '#fff' : '#000',
-            }}
-          >
-            &lsaquo;
-          </Text>
-        </TouchableOpacity>
+      />
+      <WebView
+        ref={(wv) => {
+          webView.current = wv as WebView
+        }}
+        source={{
+          uri: 'https://eodiro.com',
+        }}
+        decelerationRate="normal"
+        onMessage={async ({ nativeEvent }) => {
+          let data: MessageData
+          try {
+            data = JSON.parse(nativeEvent.data)
+          } catch (error) {
+            return
+          }
 
-        <TouchableOpacity
-          style={style.arrowContainer}
-          onPress={() => {
-            webView.goForward()
-          }}
-        >
-          <Text
-            style={{
-              ...style.arrow,
-              opacity: navState?.canGoForward ? 1 : 0.3,
-              color: isDarkMode ? '#fff' : '#000',
-            }}
-          >
-            &rsaquo;
-          </Text>
-        </TouchableOpacity>
-      </View> */}
-    </NavigationContainer>
+          const { key, authProps, apiHost } = data
+
+          if (key === 'auth') {
+            if (new URL(currentUrl).pathname !== '/') {
+              return
+            }
+
+            if (!authProps?.isSigned) return
+
+            const deviceId = DeviceInfo.getUniqueId()
+
+            let pushToken = ''
+
+            if (Constants.isDevice) {
+              const { data } = await Notifications.getExpoPushTokenAsync({
+                experienceId: Config.experienceId,
+              })
+              pushToken = data
+            }
+
+            if (!pushToken) {
+              Alert.alert('에러', '푸시 알림 토큰을 가져올 수 없습니다.')
+              return
+            }
+
+            const result = await oneApiClient(apiHost, {
+              action: 'addDevice',
+              data: {
+                deviceId,
+                pushToken,
+                accessToken: authProps.tokens.accessToken as string,
+              },
+            })
+
+            if (result.err) {
+              console.log(result.err)
+              Alert.alert(
+                '기기 등록에 문제가 발생했습니다.',
+                `ERR: ${result.err}`
+              )
+            }
+          } else if (key === 'goBack') {
+            webView.current?.goBack()
+          }
+        }}
+        onNavigationStateChange={(e) => {
+          setCurrentUrl(e.url)
+        }}
+      />
+    </>
   )
 }
 
 const arrowSize = 35
-
-const style = StyleSheet.create({
-  arrowContainer: {
-    width: 60,
-    height: 45,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  arrow: {
-    fontSize: arrowSize,
-    lineHeight: arrowSize,
-  },
-})
