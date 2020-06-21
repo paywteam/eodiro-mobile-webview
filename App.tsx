@@ -1,21 +1,17 @@
 import 'react-native-gesture-handler'
 
 import * as Notifications from 'expo-notifications'
-import * as ScreenOrientation from 'expo-screen-orientation'
 
 import {
-  ActivityIndicator,
   Alert,
   Keyboard,
   Linking,
+  Platform,
   StatusBar,
-  StyleSheet,
-  Text,
   View,
 } from 'react-native'
 import { MessageData, NotificationsStatus } from './src/types'
 import React, { useEffect, useRef, useState } from 'react'
-import WebView, { WebViewNavigation } from 'react-native-webview'
 import {
   checkNotifications,
   requestNotifications,
@@ -26,6 +22,7 @@ import Config from './config'
 import Constants from 'expo-constants'
 import DeviceInfo from 'react-native-device-info'
 import URL from 'url-parse'
+import WebView from 'react-native-webview'
 import { enableScreens } from 'react-native-screens'
 import { oneApiClient } from '@payw/eodiro-one-api'
 import { useDarkMode } from 'react-native-dark-mode'
@@ -46,18 +43,19 @@ export default function App() {
   const [isNotificationsGranted, setIsNotificationsGranted] = useState(false)
 
   const [url, setUrl] = useState('https://eodiro.com')
+  // const [url, setUrl] = useState('http://10.0.1.7:3020')
 
   const isDarkMode = useDarkMode()
 
   const [isLoaded, setIsLoaded] = useState(false)
-  const [isNavScrolled, setIsNavScrolled] = useState(false)
+
   const webView = useRef<WebView>()
   const [currentUrl, setCurrentUrl] = useState(url)
 
   useEffect(() => {
     setTimeout(() => {
       setNavBarTextColor(isDarkMode)
-    }, 1200)
+    }, 1000)
   }, [isDarkMode])
 
   useEffect(() => {
@@ -118,25 +116,20 @@ export default function App() {
 
   return (
     <>
-      <View
-        style={{
-          height: Constants.statusBarHeight,
-          backgroundColor:
-            isDarkMode && isNavScrolled
-              ? '#1f1f1f'
-              : isDarkMode && !isNavScrolled
-              ? '#000'
-              : isNavScrolled
-              ? '#fff'
-              : '#f0f2f3',
-        }}
-      />
+      {Platform.OS === 'ios' && (
+        <View
+          style={{
+            height: Constants.statusBarHeight,
+            backgroundColor: isDarkMode ? '#1f1f1f' : '#fff',
+          }}
+        />
+      )}
       <WebView
         ref={(wv) => {
           webView.current = wv as WebView
         }}
         source={{
-          uri: 'https://eodiro.com',
+          uri: url,
         }}
         decelerationRate="normal"
         onMessage={async ({ nativeEvent }) => {
@@ -161,10 +154,13 @@ export default function App() {
             let pushToken = ''
 
             if (Constants.isDevice) {
-              const { data } = await Notifications.getExpoPushTokenAsync({
-                experienceId: Config.experienceId,
-              })
-              pushToken = data
+              const getPushTokenResult = await Notifications.getExpoPushTokenAsync(
+                {
+                  experienceId: Config.experienceId,
+                }
+              )
+
+              pushToken = getPushTokenResult.data
             }
 
             if (!pushToken) {
@@ -199,5 +195,3 @@ export default function App() {
     </>
   )
 }
-
-const arrowSize = 35
