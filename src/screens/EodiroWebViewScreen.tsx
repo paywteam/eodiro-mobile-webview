@@ -3,7 +3,6 @@ import * as Notifications from 'expo-notifications'
 import { ActivityIndicator, Alert, View } from 'react-native'
 import { useEffect, useRef, useState } from 'react'
 
-import { AppStatus } from '../modules/app-status'
 import Config from '../../config'
 import Constants from 'expo-constants'
 import DeviceInfo from 'react-native-device-info'
@@ -38,6 +37,7 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
   // let webView: WebView
   const webView = useRef<WebView>()
   const { url } = route.params
+  const [currentUrl, setCurrentUrl] = useState(url)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isPushed, setIsPushed] = useState(false)
 
@@ -91,7 +91,10 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
           const { key, authProps, apiHost } = data
 
           if (key === 'auth') {
-            if (new URL(url).pathname !== '/') return
+            if (new URL(currentUrl).pathname !== '/') {
+              return
+            }
+
             if (!authProps?.isSigned) return
 
             const deviceId = DeviceInfo.getUniqueId()
@@ -140,8 +143,11 @@ const EodiroWebViewScreen: React.FC<WebViewScreenProps> = ({
             setIsNavScrolled(value)
           }
         }}
+        onNavigationStateChange={(e) => {
+          setCurrentUrl(e.url)
+        }}
         onLoadEnd={(e) => {
-          // if (e.nativeEvent.loading) {
+          // if (!e.nativeEvent.loading) {
           //   setIsLoaded(true)
           // }
         }}

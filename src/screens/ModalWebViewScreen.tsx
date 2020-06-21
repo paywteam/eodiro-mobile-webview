@@ -6,6 +6,7 @@ import { MessageData } from '../types'
 import { RootStackParamList } from '../../App'
 import { RouteProp } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
+import URL from 'url-parse'
 import WebView from 'react-native-webview'
 import { useDarkMode } from 'react-native-dark-mode'
 
@@ -66,6 +67,7 @@ const ModalWebViewScreen: React.FC<ModalWebViewScreenProps> = ({
 
             navigation.goBack()
           } else if (key === 'goBack') {
+            AppStatus.shouldReload = true
             navigation.goBack()
           } else if (key === 'fontsReady') {
             setTimeout(() => {
